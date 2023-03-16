@@ -11,8 +11,8 @@ using TestRecipeAPI.Data;
 namespace TestRecipeAPI.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20230314161257_Third")]
-    partial class Third
+    [Migration("20230315053245_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -75,38 +75,6 @@ namespace TestRecipeAPI.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Favourites");
-                });
-
-            modelBuilder.Entity("TestRecipeAPI.Entities.User", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("FirstName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Role")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Username")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("TestRecipeAPI.TestRecipe", b =>

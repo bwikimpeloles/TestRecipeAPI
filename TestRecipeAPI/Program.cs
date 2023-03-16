@@ -4,10 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using ServiceStack;
 using System.Text;
-using TestRecipeAPI.Authorization;
 using TestRecipeAPI.Data;
 using TestRecipeAPI.Entities;
-using TestRecipeAPI.Services;
 using BCryptNet = BCrypt.Net.BCrypt;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,8 +18,6 @@ builder.Services.AddControllers().AddNewtonsoftJson(options =>
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IJwtUtils, JwtUtils>();
 builder.Services.AddDbContext<DataContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
@@ -70,18 +66,5 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// create hardcoded test users in db on startup
-{
-    var testUsers = new List<User>
-    {
-        new User { Id = 1, FirstName = "Admin", LastName = "User", Username = "admin", PasswordHash = BCryptNet.HashPassword("admin"), Role = Role.Admin },
-        new User { Id = 2, FirstName = "Normal", LastName = "User", Username = "user", PasswordHash = BCryptNet.HashPassword("user"), Role = Role.User }
-    };
-
-    using var scope = app.Services.CreateScope();
-    var dataContext = scope.ServiceProvider.GetRequiredService<DataContext>();
-    dataContext.Users.AddRange(testUsers);
-    
-}
 
 app.Run();

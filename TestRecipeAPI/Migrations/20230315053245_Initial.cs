@@ -5,7 +5,7 @@
 namespace TestRecipeAPI.Migrations
 {
     /// <inheritdoc />
-    public partial class Third : Migration
+    public partial class Initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -41,6 +41,22 @@ namespace TestRecipeAPI.Migrations
                 {
                     table.PrimaryKey("PK_Favourites", x => x.Id);
                 });
+
+            migrationBuilder.CreateTable(
+                name: "TestRecipes",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Ingredient = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Instruction = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Favourite = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TestRecipes", x => x.Id);
+                });
         }
 
         /// <inheritdoc />
@@ -51,6 +67,9 @@ namespace TestRecipeAPI.Migrations
 
             migrationBuilder.DropTable(
                 name: "Favourites");
+
+            migrationBuilder.DropTable(
+                name: "TestRecipes");
         }
     }
 }

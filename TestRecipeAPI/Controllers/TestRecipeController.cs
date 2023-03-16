@@ -3,8 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using TestRecipeAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
-using TestRecipeAPI.Common;
-using BCryptNet = BCrypt.Net.BCrypt;
 using TestRecipeAPI.Entities;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
@@ -74,13 +72,13 @@ namespace TestRecipeAPI.Controllers
         }
 
         //favourite
-        [HttpGet("~/GetFavourite")]
+        [HttpGet("GetFavourite")]
         public async Task<ActionResult<List<Favourite>>> GetFavourite()
         {
             return Ok(await _context.Favourites.ToListAsync());
         }
 
-        [HttpPost("~/CreateFavourite")]
+        [HttpPost("CreateFavourite")]
         public async Task<ActionResult<List<TestRecipe>>> CreateFavourite(Favourite favourite)
         {
             _context.Favourites.Add(favourite);
@@ -89,7 +87,7 @@ namespace TestRecipeAPI.Controllers
             return Ok(await _context.Favourites.ToListAsync());
         }
 
-        [HttpPut("~/UpdateFavourite")]
+        [HttpPut("UpdateFavourite")]
         public async Task<ActionResult<List<TestRecipe>>> UpdateFavourite(Favourite favourite)
         {
             var dbFavourite = await _context.Favourites.FindAsync(favourite.Id);
@@ -106,7 +104,7 @@ namespace TestRecipeAPI.Controllers
         }
 
         //account
-        [HttpGet("~/GetAccount")]
+        [HttpGet("GetAccount")]
         public async Task<ActionResult<List<Account>>> GetAccount()
         {
             return Ok(await _context.Accounts.ToListAsync());
@@ -188,6 +186,12 @@ namespace TestRecipeAPI.Controllers
         public async Task<ActionResult<Account>> GetAllAccounts()
         {
             return Ok(await _context.Accounts.ToListAsync());
+        }
+
+        [HttpGet("userfavourite/{username}/{productid}")]
+        public Task<bool> CheckUserFavourite(string username, int productid)
+        {
+            return _context.Favourites.AnyAsync(x => x.Username == username && x.ProductId == productid && x.FavouriteBool == true);
         }
 
     }
