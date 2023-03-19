@@ -74,8 +74,8 @@ namespace TestRecipeAPI.Controllers
             return Ok(await _context.TestRecipes.ToListAsync());
         }
 
-        [HttpPost("favourite/{accountsId}/{testRecipeId}")]
-        //AccountRecipe => Favourite
+        //Favourite
+        [HttpPost("favourite")]
         public async Task<ActionResult<Account>> AddFavourite(int accountsId, int testRecipeId)
         {
             var accounts = await _context.Accounts.Where(c => c.Id == accountsId)
@@ -115,6 +115,19 @@ namespace TestRecipeAPI.Controllers
         }
 
 
+        [HttpGet("favourite/{accountsId}")]
+        public async Task<ActionResult<List<FavouriteTable>>> GetFavourites(int accountsId)
+        {
+            return Ok(await _context.FavouriteTables.Where(d => d.AccountsId == accountsId).Select(t=>t.TestRecipe).ToListAsync());
+          
+        }
+
+        [HttpGet("favouritecount/{testRecipesId}")]
+        public int GetFavouritesCount(int testRecipesId)
+        {
+            return _context.FavouriteTables.Where(d => d.TestRecipesId == testRecipesId).Select(t => t.Account).Count();
+
+        }
 
         [HttpGet("favouriteaccount/{accountsId}")]
         public async Task<ActionResult<IEnumerable<Account>>> GetFavouritesAccount(int accountsId)
@@ -144,12 +157,6 @@ namespace TestRecipeAPI.Controllers
                         .ToListAsync();
         }
 
-
-        [HttpGet("favourite")]
-        public async Task<ActionResult<List<FavouriteTable>>> GetFavourites()
-        {
-            return Ok(await _context.FavouriteTables.ToListAsync());
-        }
 
 
 
@@ -216,7 +223,7 @@ namespace TestRecipeAPI.Controllers
             var key = Encoding.ASCII.GetBytes("veryverysecret.....");
             var identity = new ClaimsIdentity(new Claim[]
             {
-                new Claim(ClaimTypes.Sid, account.Id.ToString()),
+                new Claim(ClaimTypes.Actor, account.Id.ToString()),
                 new Claim(ClaimTypes.Role, account.Role),
                 new Claim(ClaimTypes.Name, account.Username),
             });
