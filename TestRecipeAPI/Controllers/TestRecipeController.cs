@@ -8,6 +8,7 @@ using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Identity.Client;
 
 namespace TestRecipeAPI.Controllers
 {
@@ -44,14 +45,14 @@ namespace TestRecipeAPI.Controllers
         {
             var dbRecipe = await _context.TestRecipes.FindAsync(recipe.Id);
             if (dbRecipe == null)
-            return BadRequest("Recipe not found.");
+                return BadRequest("Recipe not found.");
 
             dbRecipe.Name = recipe.Name;
             dbRecipe.Ingredient = recipe.Ingredient;
             dbRecipe.Instruction = recipe.Instruction;
             dbRecipe.Favourite = recipe.Favourite;
 
-           
+
 
             await _context.SaveChangesAsync();
 
@@ -71,37 +72,68 @@ namespace TestRecipeAPI.Controllers
             return Ok(await _context.TestRecipes.ToListAsync());
         }
 
-        //favourite
-        [HttpGet("GetFavourite")]
-        public async Task<ActionResult<List<Favourite>>> GetFavourite()
+        [HttpPost("favourite")]
+        //AccountRecipe => Favourite
+        public async Task<ActionResult<Account>> AddFavourite(int accountsId, int testRecipeId)
         {
-            return Ok(await _context.Favourites.ToListAsync());
-        }
+            var accounts = await _context.Accounts.Where(c => c.Id == accountsId)
+                .Include(c => c.TestRecipes)
+                .FirstOrDefaultAsync();
+            if (accounts == null)
+                return NotFound();
 
-        [HttpPost("CreateFavourite")]
-        public async Task<ActionResult<List<TestRecipe>>> CreateFavourite(Favourite favourite)
-        {
-            _context.Favourites.Add(favourite);
+            var recipes = await _context.TestRecipes.FindAsync(testRecipeId);
+            if (recipes == null)
+                return NotFound();
+
+            accounts.TestRecipes.Add(recipes);
             await _context.SaveChangesAsync();
 
-            return Ok(await _context.Favourites.ToListAsync());
+            return accounts;
         }
 
-        [HttpPut("UpdateFavourite")]
-        public async Task<ActionResult<List<TestRecipe>>> UpdateFavourite(Favourite favourite)
+        [HttpGet("favouriteaccount")]
+        public async Task<ActionResult<IEnumerable<Account>>> GetFavourites(int accountsId)
         {
-            var dbFavourite = await _context.Favourites.FindAsync(favourite.Id);
-            if (dbFavourite == null)
-                return BadRequest("Favourite not found.");
+            var accounts = await _context.Accounts.Where(c => c.Id == accountsId)
+                .Include(c => c.TestRecipes)
+                .FirstOrDefaultAsync();
+            if (accounts == null)
+                return NotFound();
 
-            dbFavourite.ProductId = favourite.ProductId;
-            dbFavourite.Username = favourite.Username;
-            dbFavourite.FavouriteBool = favourite.FavouriteBool;
-
-            await _context.SaveChangesAsync();
-
-            return Ok(await _context.Favourites.ToListAsync());
+            return await _context.Accounts
+                .Include(x => x.TestRecipes).Where(c => c.Id == accountsId)
+                        .ToListAsync();
         }
+
+        [HttpGet("favouriterecipe")]
+        public async Task<ActionResult<IEnumerable<TestRecipe>>> GetFavouritesRecipe(int testRecipesId)
+        {
+            var recipes = await _context.TestRecipes.Where(c => c.Id == testRecipesId)
+                .Include(c => c.Accounts)
+                .FirstOrDefaultAsync();
+            if (recipes == null)
+                return NotFound();
+
+            return await _context.TestRecipes
+                .Include(x => x.Accounts).Where(c => c.Id == testRecipesId)
+                        .ToListAsync();
+        }
+
+        [HttpGet("favouriterecipecount")]
+        public int GetFavouritesRecipeCount(int testRecipesId)
+        {
+            var recipes =  _context.TestRecipes.Where(c => c.Id == testRecipesId)
+                .Include(c => c.Accounts)
+                .FirstOrDefault();
+            if (recipes == null)
+                return 0;
+
+            return _context.TestRecipes
+                .Include(x => x.Accounts).Where(c => c.Id == testRecipesId).Count();
+        }
+
+
 
         //account
         [HttpGet("GetAccount")]
@@ -116,13 +148,13 @@ namespace TestRecipeAPI.Controllers
             if (accountObj == null) return BadRequest();
 
             var account = await _context.Accounts.FirstOrDefaultAsync(x => x.Username == accountObj.Username && x.Password == accountObj.Password);
-            if (account == null) return NotFound( new {Message = "Account Not Found!"});
+            if (account == null) return NotFound(new { Message = "Account Not Found!" });
 
             account.Token = CreateJwtToken(account);
             return Ok(new
             {
                 Token = account.Token,
-                Message = "Login Success!."
+                Message = "Login Success!"
             });
         }
 
@@ -132,7 +164,7 @@ namespace TestRecipeAPI.Controllers
             if (accountObj == null) return BadRequest();
 
             //check username exist
-            if(await CheckUserNameExistAsync(accountObj.Username))
+            if (await CheckUserNameExistAsync(accountObj.Username))
                 return BadRequest(new { Message = "Username Already Exist!" });
 
             //chek username exist
@@ -140,19 +172,20 @@ namespace TestRecipeAPI.Controllers
                 return BadRequest(new { Message = "Email Already Exist!" });
 
 
-            await _context.Accounts.AddAsync(accountObj);   
-            await _context.SaveChangesAsync();  
+            await _context.Accounts.AddAsync(accountObj);
+            await _context.SaveChangesAsync();
 
             return Ok(new
             {
-                Token="",
+                Token = "",
                 Message = "Account Registered!."
             });
         }
 
-        private Task<bool> CheckUserNameExistAsync(string username) { 
+        private Task<bool> CheckUserNameExistAsync(string username)
+        {
             return _context.Accounts.AnyAsync(x => x.Username == username);
-                }
+        }
 
         private Task<bool> CheckUserEmailExistAsync(string email)
         {
@@ -165,6 +198,7 @@ namespace TestRecipeAPI.Controllers
             var key = Encoding.ASCII.GetBytes("veryverysecret.....");
             var identity = new ClaimsIdentity(new Claim[]
             {
+                new Claim(ClaimTypes.Sid, account.Id.ToString()),
                 new Claim(ClaimTypes.Role, account.Role),
                 new Claim(ClaimTypes.Name, account.Username),
             });
@@ -188,11 +222,6 @@ namespace TestRecipeAPI.Controllers
             return Ok(await _context.Accounts.ToListAsync());
         }
 
-        [HttpGet("userfavourite/{username}/{productid}")]
-        public Task<bool> CheckUserFavourite(string username, int productid)
-        {
-            return _context.Favourites.AnyAsync(x => x.Username == username && x.ProductId == productid && x.FavouriteBool == true);
-        }
 
     }
 }

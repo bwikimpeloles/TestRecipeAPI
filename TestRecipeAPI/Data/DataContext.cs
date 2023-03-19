@@ -10,16 +10,12 @@ namespace TestRecipeAPI.Data
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     => optionsBuilder.EnableSensitiveDataLogging();
 
-        
 
-        
+
 
         public DbSet<TestRecipe> TestRecipes => Set<TestRecipe>();
-        public DbSet<Favourite> Favourites => Set<Favourite>();
+    
         public DbSet<Account> Accounts => Set<Account>();
-
-
-
 
     }
 }
