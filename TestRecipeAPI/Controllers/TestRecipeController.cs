@@ -92,6 +92,26 @@ namespace TestRecipeAPI.Controllers
             return accounts;
         }
 
+        [HttpDelete("favourite")]
+        //AccountRecipe => Favourite
+        public async Task<ActionResult<Account>> DeleteFavourite(int accountsId, int testRecipeId)
+        {
+            var accounts = await _context.Accounts.Where(c => c.Id == accountsId)
+                .Include(c => c.TestRecipes)
+                .FirstOrDefaultAsync();
+            if (accounts == null)
+                return NotFound();
+
+            var recipes = await _context.TestRecipes.FindAsync(testRecipeId);
+            if (recipes == null)
+                return NotFound();
+
+            accounts.TestRecipes.Remove(recipes);
+            await _context.SaveChangesAsync();
+
+            return accounts;
+        }
+
         [HttpGet("favouriteaccount")]
         public async Task<ActionResult<IEnumerable<Account>>> GetFavourites(int accountsId)
         {
@@ -119,20 +139,6 @@ namespace TestRecipeAPI.Controllers
                 .Include(x => x.Accounts).Where(c => c.Id == testRecipesId)
                         .ToListAsync();
         }
-
-        [HttpGet("favouriterecipecount")]
-        public int GetFavouritesRecipeCount(int testRecipesId)
-        {
-            var recipes =  _context.TestRecipes.Where(c => c.Id == testRecipesId)
-                .Include(c => c.Accounts)
-                .FirstOrDefault();
-            if (recipes == null)
-                return 0;
-
-            return _context.TestRecipes
-                .Include(x => x.Accounts).Where(c => c.Id == testRecipesId).Count();
-        }
-
 
 
         //account
