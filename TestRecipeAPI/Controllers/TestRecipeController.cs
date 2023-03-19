@@ -9,6 +9,8 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Identity.Client;
+using Newtonsoft.Json;
+using Microsoft.Data.SqlClient;
 
 namespace TestRecipeAPI.Controllers
 {
@@ -72,7 +74,7 @@ namespace TestRecipeAPI.Controllers
             return Ok(await _context.TestRecipes.ToListAsync());
         }
 
-        [HttpPost("favourite")]
+        [HttpPost("favourite/{accountsId}/{testRecipeId}")]
         //AccountRecipe => Favourite
         public async Task<ActionResult<Account>> AddFavourite(int accountsId, int testRecipeId)
         {
@@ -92,7 +94,7 @@ namespace TestRecipeAPI.Controllers
             return accounts;
         }
 
-        [HttpDelete("favourite")]
+        [HttpDelete("favourite/{accountsId}/{testRecipeId}")]
         //AccountRecipe => Favourite
         public async Task<ActionResult<Account>> DeleteFavourite(int accountsId, int testRecipeId)
         {
@@ -112,8 +114,10 @@ namespace TestRecipeAPI.Controllers
             return accounts;
         }
 
-        [HttpGet("favouriteaccount")]
-        public async Task<ActionResult<IEnumerable<Account>>> GetFavourites(int accountsId)
+
+
+        [HttpGet("favouriteaccount/{accountsId}")]
+        public async Task<ActionResult<IEnumerable<Account>>> GetFavouritesAccount(int accountsId)
         {
             var accounts = await _context.Accounts.Where(c => c.Id == accountsId)
                 .Include(c => c.TestRecipes)
@@ -126,7 +130,7 @@ namespace TestRecipeAPI.Controllers
                         .ToListAsync();
         }
 
-        [HttpGet("favouriterecipe")]
+        [HttpGet("favouriterecipefavourite/{accountsId}/{testRecipesId}")]
         public async Task<ActionResult<IEnumerable<TestRecipe>>> GetFavouritesRecipe(int testRecipesId)
         {
             var recipes = await _context.TestRecipes.Where(c => c.Id == testRecipesId)
@@ -139,6 +143,14 @@ namespace TestRecipeAPI.Controllers
                 .Include(x => x.Accounts).Where(c => c.Id == testRecipesId)
                         .ToListAsync();
         }
+
+
+        [HttpGet("favourite")]
+        public async Task<ActionResult<List<FavouriteTable>>> GetFavourites()
+        {
+            return Ok(await _context.FavouriteTables.ToListAsync());
+        }
+
 
 
         //account
